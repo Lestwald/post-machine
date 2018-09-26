@@ -1,4 +1,3 @@
-#include <conio.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -80,7 +79,7 @@ void readTape(char *fileName) {
 }
 
 void readInstructions(char *fileName) {
-	instructions = (struct instruction*) malloc(sizeof(struct instruction));
+	instructions = (struct instruction*) malloc(2 * sizeof(struct instruction));
 	FILE *instructionsFile = fopen(fileName, "r");
 	if (instructionsFile == NULL) error(102);
 	int i = 1;
@@ -90,8 +89,6 @@ void readInstructions(char *fileName) {
 	while ((f = fscanf(instructionsFile, "%d. %c", &index, &instructions[i].operation)) != EOF) {
 		if (f < 2) error(301);
 		if (index != i) error(302);
-		instructions = (struct instruction*) realloc(instructions, (i + 1) * sizeof(struct instruction));
-		if (instructions == NULL) error(103);
 		switch(instructions[i].operation) {
 			case '<':
 			case '>':
@@ -118,6 +115,8 @@ void readInstructions(char *fileName) {
 		}
 		fscanf(instructionsFile, "\n");
 		i++;
+		instructions = (struct instruction*) realloc(instructions, (i + 1) * sizeof(struct instruction));
+		if (instructions == NULL) error(103);
 	}
 	if (!isStopFound) error(305);
 	i--;
@@ -231,14 +230,17 @@ bool run(bool isStep) {
 }
 
 void debug() {
-	printf("     S: Step\n  C<N>: N steps\n Enter: Run\n     P: Pause\n   Esc: Exit\n");
+	printf("     S: Step\n  C<N>: N steps\n     R: Run\n     E: Exit\n");
 	bool isEnd = false;
-	while (!isEnd){
-		switch(getch()) {
+	char command;
+	while (!isEnd) {
+		scanf("%c", &command);
+		switch(command) {
 			case 'S':
 			case 's':
 				isEnd = run(true);
 				printTape("stdout");
+				if (isEnd) exit(0);
 				break;
 			case 'C':
 			case 'c':
@@ -248,27 +250,19 @@ void debug() {
 				for (int i = 0; i < n; i++) {
 					isEnd = run(true);
 					printTape("stdout");
-					if (kbhit()) {
-						char c = getch();
-						if (c == 'p' || c == 'P') break;
-						else if (c == 27) exit(0);
-					}   
 					if (isEnd) exit(0);
 				}
 				break;
-			case 13:
+			case 'R':
+			case 'r':
 				while (!isEnd) {
 					isEnd = run(true);
 					printTape("stdout");
-					if (kbhit()) {
-						char c = getch();
-						if (c == 'p' || c == 'P') break;
-						else if (c == 27) exit(0);
-					}
 				}
 				if (isEnd) exit(0);
 				break;
-			case 27:
+			case 'E':
+			case 'e':
 				exit(0);
 		}
 	}
